@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meeting Effectiveness Scorer</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen p-4">
+<div class="max-w-2xl mx-auto">
+  <h1 class="text-2xl font-bold text-center mb-2 text-blue-400">Meeting Effectiveness Scorer</h1>
+  <p class="text-center text-gray-400 text-sm mb-6">Calculate the true cost and efficiency of your meeting</p>
+
+  <div class="bg-gray-800 rounded p-4 mb-4">
+    <h2 class="text-sm font-semibold text-yellow-400 mb-3">Meeting Parameters</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div>
+        <label for="attendees" class="block text-xs text-gray-400 mb-1">Attendees</label>
+        <input type="number" id="attendees" value="6" min="1" max="100" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm" aria-label="Number of attendees">
+      </div>
+      <div>
+        <label for="duration" class="block text-xs text-gray-400 mb-1">Duration (minutes)</label>
+        <input type="number" id="duration" value="60" min="5" max="480" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm" aria-label="Meeting duration in minutes">
+      </div>
+      <div>
+        <label for="hourlyRate" class="block text-xs text-gray-400 mb-1">Avg Hourly Rate ($)</label>
+        <input type="number" id="hourlyRate" value="75" min="1" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm" aria-label="Average hourly rate">
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-gray-800 rounded p-4 mb-4">
+    <h2 class="text-sm font-semibold text-yellow-400 mb-3">Agenda Achievement Checklist</h2>
+    <div class="space-y-2" id="checklist">
+      <label class="flex items-start gap-3 cursor-pointer hover:bg-gray-700 p-2 rounded">
+        <input type="checkbox" class="mt-0.5 w-4 h-4 accent-blue-500" id="c1">
+        <div><div class="text-sm">Clear agenda was shared before meeting</div><div class="text-xs text-gray-400">Attendees knew goals in advance</div></div>
+      </label>
+      <label class="flex items-start gap-3 cursor-pointer hover:bg-gray-700 p-2 rounded">
+        <input type="checkbox" class="mt-0.5 w-4 h-4 accent-blue-500" id="c2">
+        <div><div class="text-sm">All agenda items were discussed</div><div class="text-xs text-gray-400">No items left unaddressed</div></div>
+      </label>
+      <label class="flex items-start gap-3 cursor-pointer hover:bg-gray-700 p-2 rounded">
+        <input type="checkbox" class="mt-0.5 w-4 h-4 accent-blue-500" id="c3">
+        <div><div class="text-sm">Decisions were made and documented</div><div class="text-xs text-gray-400">Actionable outcomes recorded</div></div>
+      </label>
+      <label class="flex items-start gap-3 cursor-pointer hover:bg-gray-700 p-2 rounded">
+        <input type="checkbox" class="mt-0.5 w-4 h-4 accent-blue-500" id="c4">
+        <div><div class="text-sm">Action items assigned with owners</div><div class="text-xs text-gray-400">Each task has a named owner</div></div>
+      </label>
+      <label class="flex items-start gap-3 cursor-pointer hover:bg-gray-700 p-2 rounded">
+        <input type="checkbox" class="mt-0.5 w-4 h-4 accent-blue-500" id="c5">
+        <div><div class="text-sm">Meeting ended on time</div><div class="text-xs text-gray-400">Respect for participants' calendars</div></div>
+      </label>
+    </div>
+  </div>
+
+  <button onclick="score()" class="w-full bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-medium mb-4">Calculate Score</button>
+
+  <div id="results" class="space-y-3"></div>
+</div>
+
+<script>
+function score() {
+  const attendees = parseInt(document.getElementById('attendees').value) || 1;
+  const duration = parseInt(document.getElementById('duration').value) || 60;
+  const hourlyRate = parseFloat(document.getElementById('hourlyRate').value) || 75;
+  const checks = ['c1','c2','c3','c4','c5'].map(id => document.getElementById(id).checked);
+  const checkedCount = checks.filter(Boolean).length;
+
+  const totalCost = attendees * (duration / 60) * hourlyRate;
+  const agendaScore = checkedCount / 5; // 0–1
+  const efficiencyScore = Math.round(agendaScore * 100);
+
+  const costPerPerson = totalCost / attendees;
+  const effectiveCost = totalCost * agendaScore;
+  const wastedCost = totalCost * (1 - agendaScore);
+
+  const rating = efficiencyScore >= 80 ? { label: 'Excellent', color: 'text-green-400', bg: 'border-green-500' }
+    : efficiencyScore >= 60 ? { label: 'Good', color: 'text-yellow-400', bg: 'border-yellow-500' }
+    : efficiencyScore >= 40 ? { label: 'Fair', color: 'text-orange-400', bg: 'border-orange-500' }
+    : { label: 'Poor', color: 'text-red-400', bg: 'border-red-500' };
+
+  const improvements = [];
+  if (!checks[0]) improvements.push('Share agenda 24h before meeting');
+  if (!checks[1]) improvements.push('Prioritize all agenda items');
+  if (!checks[2]) improvements.push('Assign a note-taker for decisions');
+  if (!checks[3]) improvements.push('Add owner + deadline to each action item');
+  if (!checks[4]) improvements.push('Use a timer and appoint a timekeeper');
+
+  document.getElementById('results').innerHTML = `
+    <div class="bg-gray-800 rounded p-4 border-l-4 ${rating.bg}">
+      <div class="flex justify-between items-center mb-2">
+        <span class="font-semibold">Effectiveness Score</span>
+        <span class="${rating.color} text-2xl font-bold">${efficiencyScore}% — ${rating.label}</span>
+      </div>
+      <div class="w-full bg-gray-700 rounded-full h-3 mb-2">
+        <div class="h-3 rounded-full transition-all" style="width:${efficiencyScore}%;background:${efficiencyScore>=80?'#22c55e':efficiencyScore>=60?'#eab308':efficiencyScore>=40?'#f97316':'#ef4444'}"></div>
+      </div>
+      <div class="text-xs text-gray-400">${checkedCount}/5 agenda criteria met</div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-3">
+      <div class="bg-gray-800 rounded p-3 text-center">
+        <div class="text-xs text-gray-400 mb-1">Total Meeting Cost</div>
+        <div class="text-xl font-bold text-white">$${totalCost.toFixed(0)}</div>
+        <div class="text-xs text-gray-400">${attendees} × ${duration}min × $${hourlyRate}/hr</div>
+      </div>
+      <div class="bg-gray-800 rounded p-3 text-center">
+        <div class="text-xs text-gray-400 mb-1">Effective Value</div>
+        <div class="text-xl font-bold text-green-400">$${effectiveCost.toFixed(0)}</div>
+        <div class="text-xs text-gray-400">Based on ${efficiencyScore}% score</div>
+      </div>
+      <div class="bg-gray-800 rounded p-3 text-center">
+        <div class="text-xs text-gray-400 mb-1">Potential Waste</div>
+        <div class="text-xl font-bold text-red-400">$${wastedCost.toFixed(0)}</div>
+        <div class="text-xs text-gray-400">$${costPerPerson.toFixed(0)} per person</div>
+      </div>
+    </div>
+
+    ${improvements.length > 0 ? `
+    <div class="bg-gray-800 rounded p-4">
+      <div class="text-sm font-semibold text-purple-400 mb-2">Improvement Suggestions</div>
+      <ul class="space-y-1 text-sm text-gray-300">
+        ${improvements.map(i => `<li class="flex gap-2"><span class="text-yellow-400">→</span>${i}</li>`).join('')}
+      </ul>
+    </div>` : '<div class="bg-green-900 bg-opacity-30 border border-green-700 rounded p-3 text-center text-green-400 font-semibold">Perfect meeting! All criteria met.</div>'}
+  `;
+}
+
+score();
+['attendees','duration','hourlyRate','c1','c2','c3','c4','c5'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('change', score);
+  if (el.type === 'number') el.addEventListener('input', score);
+});
+</script>
+</body>
+</html>
